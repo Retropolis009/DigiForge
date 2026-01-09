@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function AuthModal({ isOpen, onClose }) {
+export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [mode, setMode] = useState("login"); // "login" or "signup"
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -28,14 +28,14 @@ export default function AuthModal({ isOpen, onClose }) {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.detail || "Something went wrong");
-      } else {
+      if (res.ok) {
         setSuccessMessage(data.message);
+        onAuthSuccess(username); // update parent state with username
         setUsername("");
         setPassword("");
-        // Optional: automatically close modal after success
         setTimeout(() => onClose(), 1500);
+      } else {
+        setError(data.detail || "Something went wrong"); // show error
       }
     } catch (err) {
       setError("Network error: " + err.message);

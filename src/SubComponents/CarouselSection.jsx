@@ -1,24 +1,24 @@
 import React, { useState } from "react";
 import { motion, useMotionValue } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const carouselItems = [
-  { name: "CPU", img: "https://d1q3zw97enxzq2.cloudfront.net/images/AMD_Ryzen_9_9950X3D_vs_9900X3D.width-1000.format-webp.webp" },
-  { name: "GPU", img: "https://www.notebookcheck.net/fileadmin/Notebooks/News/_nc4/rtx_5090_600_wat_zotac_amp_extreme_infinity.jpg" },
-  { name: "RAM", img: "https://static.webx.pk/files/19643/Images/corsair-vengeance-rgb-32gb-6400mhz-c36-ddr5-ram-price-in-pak-19643-2030430-240324021000764.png" },
-  { name: "SSD", img: "https://static3.webx.pk/files/821/Images/250-821-618871-070421013829.jpg" },
-  { name: "Motherboard", img: "https://www.vortez.net/articles_file/46782_x870%20aorus%20elite%20wifi7%20review%20-%20intro.jpg" },
-  { name: "Power Supply", img: "https://static3.webx.pk/files/821/Images/asus-rog-thor-850w-industech.pk-4-821-660266-140721033419.jpg" },
-  { name: "Case", img: "https://rbtechngames.com/wp-content/uploads/2024/09/rbtech_hyte_y70_pitch_black.jpg" },
-  { name: "Cooler", img: "https://microless.com/cdn/products/7ab650a6ebb9645e3524d517fb7fe31f-hi.jpg" },
-  { name: "Peripherals", img: "https://m.media-amazon.com/images/I/91t16+g29KL._AC_SL1000__.jpg" },
-  { name: "Headphones", img: "https://bloodygaming.pk/cdn/shop/files/mr720-naraka-rgb-gaming-wireless-headset-3940260.jpg?v=1761126372" },
+  { name: "CPU", slug:"cpu" , img: "https://d1q3zw97enxzq2.cloudfront.net/images/AMD_Ryzen_9_9950X3D_vs_9900X3D.width-1000.format-webp.webp" },
+  { name: "GPU", slug:"gpu" , img: "https://www.notebookcheck.net/fileadmin/Notebooks/News/_nc4/rtx_5090_600_wat_zotac_amp_extreme_infinity.jpg" },
+  { name: "RAM", slug:"ram" , img: "https://static.webx.pk/files/19643/Images/corsair-vengeance-rgb-32gb-6400mhz-c36-ddr5-ram-price-in-pak-19643-2030430-240324021000764.png" },
+  { name: "SSD", slug:"ssd" , img: "https://static3.webx.pk/files/821/Images/250-821-618871-070421013829.jpg" },
+  { name: "Motherboard", slug:"motherboard" , img: "https://www.vortez.net/articles_file/46782_x870%20aorus%20elite%20wifi7%20review%20-%20intro.jpg" },
+  { name: "Power Supply", slug:"psu" , img: "https://static3.webx.pk/files/821/Images/asus-rog-thor-850w-industech.pk-4-821-660266-140721033419.jpg" },
+  { name: "Case", slug:"case" , img: "https://rbtechngames.com/wp-content/uploads/2024/09/rbtech_hyte_y70_pitch_black.jpg" },
+  { name: "Cooler", slug:"cooler" , img: "https://microless.com/cdn/products/7ab650a6ebb9645e3524d517fb7fe31f-hi.jpg" },
+  { name: "Peripherals", slug:"peripherals" , img: "https://m.media-amazon.com/images/I/91t16+g29KL._AC_SL1000__.jpg" },
 ];
 
 export default function CarouselSection() {
   const [index, setIndex] = useState(0);
   const dragX = useMotionValue(0);
-  const boxSize = 320;
-  const itemSpacing = boxSize;
+  const itemSpacing = 320;
+  const navigate = useNavigate();
 
   const styleMap = {
     "-2": { scale: 0.8, opacity: 0.3, zIndex: 1 },
@@ -29,32 +29,35 @@ export default function CarouselSection() {
   };
 
   const getVisible = (currentIndex) => {
-    let list = [];
-    for (let pos = -2; pos <= 2; pos++) {
+    return [-2, -1, 0, 1, 2].map((pos) => {
       const realIndex = (currentIndex + pos + carouselItems.length) % carouselItems.length;
-      list.push({ ...carouselItems[realIndex], pos });
-    }
-    return list;
+      return { ...carouselItems[realIndex], pos };
+    });
   };
 
   const onDragEnd = (_, info) => {
     const tilesMoved = Math.round(info.offset.x / itemSpacing);
-    if (tilesMoved === 0) {
-      dragX.set(0);
-      return;
+    if (tilesMoved !== 0) {
+      setIndex((prev) => (prev - tilesMoved + carouselItems.length) % carouselItems.length);
     }
-    setIndex((prev) => (prev - tilesMoved + carouselItems.length) % carouselItems.length);
     dragX.set(0);
   };
 
-  const onItemClick = (pos) => {
-    if (pos === 0) return;
-    setIndex((prev) => (prev + pos + carouselItems.length) % carouselItems.length);
+  const onItemClick = (item) => {
+    if (item.pos === 0) {
+      // Redirect to dynamic purchase page
+      navigate(`/component/${item.slug}`);
+    } else {
+      // Center the clicked item
+      setIndex((prev) => (prev + item.pos + carouselItems.length) % carouselItems.length);
+    }
   };
 
   return (
-    <div id = 'carousel'className="py-12 max-w-7xl mx-auto">
-      <h2 className="text-4xl font-extrabold mb-12 text-center text-white">Featured Components</h2>
+    <div id="carousel" className="py-12 max-w-7xl mx-auto">
+      <h2 className="text-4xl font-extrabold mb-12 text-center text-white">
+        Featured Components
+      </h2>
       <motion.div
         className="relative h-[32rem] flex items-center justify-center overflow-hidden mb-16"
         drag="x"
@@ -68,7 +71,7 @@ export default function CarouselSection() {
           <motion.div
             key={item.name}
             layout
-            onClick={() => onItemClick(item.pos)}
+            onClick={() => onItemClick(item)}
             animate={{
               x: item.pos * itemSpacing,
               scale: styleMap[item.pos].scale,
