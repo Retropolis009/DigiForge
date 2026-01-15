@@ -1,0 +1,45 @@
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from passlib.context import CryptContext
+
+app = FastAPI()
+
+# CORS setup
+origins = [
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,       # allow these origins
+    allow_credentials=True,
+    allow_methods=["*"],         # allow all HTTP methods
+    allow_headers=["*"],         # allow all headers
+)
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# In-memory "database" (for testing)
+users_db = {}
+
+# Request schemas
+class AuthData(BaseModel):
+    username: str
+    password: str
+
+@app.post("/signup")
+def signup(data: AuthData):
+    if data.username in users_db:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    hashed_password = pwd_context.hash(data.password)
+    users_db[data.username] = hashed_password
+    return {"message": "User created successfully"}
+
+@app.post("/login")
+def login(data: AuthData):
+    hashed_password = users_db.get(data.username)
+    if not hashed_password or not pwd_context.verify(data.password, hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"message": f"Welcome back, {data.username}"}
